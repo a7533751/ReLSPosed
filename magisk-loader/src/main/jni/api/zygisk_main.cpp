@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <mutex>
 
 #include "config_impl.h"
 #include "magisk_loader.h"
