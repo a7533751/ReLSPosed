@@ -183,12 +183,18 @@ struct SQLiteAPI {
     int (*step)(sqlite3_stmt *) = nullptr;
     int (*finalize)(sqlite3_stmt *) = nullptr;
     int (*close)(sqlite3 *) = nullptr;
+    int (*close_v2)(sqlite3 *) = nullptr; // Add close_v2 support
 
     bool load() {
         if (lib) return true;
 
+        // Try standard sqlite names
         lib = dlopen("libsqlite.so", RTLD_NOW | RTLD_LOCAL);
         if (!lib) lib = dlopen("libsqlite3.so", RTLD_NOW | RTLD_LOCAL);
+        
+        // Fallback to system if local fails (common in Android)
+        if (!lib) lib = dlopen("libandroid_runtime.so", RTLD_NOW | RTLD_LOCAL);
+        
         if (!lib) return false;
 
         open = (decltype(open))dlsym(lib, "sqlite3_open");
@@ -197,72 +203,84 @@ struct SQLiteAPI {
         bind_int = (decltype(bind_int))dlsym(lib, "sqlite3_bind_int");
         step = (decltype(step))dlsym(lib, "sqlite3_step");
         finalize = (decltype(finalize))dlsym(lib, "sqlite3_finalize");
+        
+        // Try to load close_v2, fallback to close
+        close_v2 = (decltype(close_v2))dlsym(lib, "sqlite3_close_v2");
         close = (decltype(close))dlsym(lib, "sqlite3_close");
 
-        if (!open || !prepare_v2 || !bind_text || !bind_int || !step || !finalize || !close) {
+        if (!open || !prepare_v2 || !bind_text || !bind_int || !step || !finalize || (!close && !close_v2)) {
             dlclose(lib);
             lib = nullptr;
             return false;
         }
         return true;
     }
+    
+    // Helper to close safely using v2 if available
+    int safe_close(sqlite3 *db) {
+        if (close_v2) return close_v2(db);
+        if (close) return close(db);
+        return 0;
+    }
 };
 
 static bool is_targeted_by_any_module(const char *package_name, int user_id) {
-  // Use a static instance to keep the library loaded across calls
-  static SQLiteAPI sql;
-  
-  // Attempt to load only if not already loaded
-  if (!sql.load()) {
-    LOGE("Failed to load sqlite or find symbols: {}", dlerror());
-    return false;
-  }
+    // Thread-safe singleton implementation
+    static SQLiteAPI sql;
+    static std::once_flag load_flag;
+    static bool loaded = false;
 
-  sqlite3 *db = NULL;
-  const char *db_path = "/data/adb/lspd/config/modules_config.db";
-  if (sql.open(db_path, &db) != 0 || db == NULL) {
-    LOGE("Failed to open sqlite db: {}", db_path);
+    std::call_once(load_flag, []() {
+        loaded = sql.load();
+        if (!loaded) {
+            LOGE("Failed to load sqlite or find symbols: {}", dlerror());
+        }
+    });
 
-    if (db) sql.close(db);
-    // Do NOT dlclose(sql.lib) here
-    return false;
-  }
+    if (!loaded) return false;
 
-  const char *query = "SELECT 1 FROM scope INNER JOIN modules ON scope.mid = modules.mid WHERE scope.app_pkg_name = ? AND scope.user_id = ? AND modules.enabled = 1 LIMIT 1;";
-  sqlite3_stmt *stmt = NULL;
-  if (sql.prepare_v2(db, query, -1, &stmt, NULL) != 0) {
-    LOGE("Failed to prepare sqlite statement");
-
-    if (db) sql.close(db);
-    return false;
-  }
-
-  if (sql.bind_text(stmt, 1, package_name, (int)strlen(package_name), NULL) != 0) {
-    LOGE("Failed to bind package name");
+    sqlite3 *db = nullptr;
+    const char *db_path = "/data/adb/lspd/config/modules_config.db";
     
-    if (stmt) sql.finalize(stmt);
-    if (db) sql.close(db);
-    return false;
-  }
-  
-  if (sql.bind_int(stmt, 2, user_id) != 0) {
-    LOGE("Failed to bind user id");
-    
-    if (stmt) sql.finalize(stmt);
-    if (db) sql.close(db);
-    return false;
-  }
+    if (sql.open(db_path, &db) != 0 || db == nullptr) {
+        LOGE("Failed to open sqlite db: {}", db_path);
+        if (db) sql.safe_close(db);
+        return false;
+    }
 
-  if (sql.step(stmt) == 100) { // SQLITE_ROW
+    const char *query = "SELECT 1 FROM scope INNER JOIN modules ON scope.mid = modules.mid WHERE scope.app_pkg_name = ? AND scope.user_id = ? AND modules.enabled = 1 LIMIT 1;";
+    sqlite3_stmt *stmt = nullptr;
+    
+    if (sql.prepare_v2(db, query, -1, &stmt, nullptr) != 0) {
+        // LOGE("Failed to prepare sqlite statement"); // Optional log
+        if (db) sql.safe_close(db);
+        return false;
+    }
+
+    if (sql.bind_text(stmt, 1, package_name, (int)strlen(package_name), nullptr) != 0) {
+        LOGE("Failed to bind package name");
+        sql.finalize(stmt);
+        sql.safe_close(db);
+        return false;
+    }
+  
+    if (sql.bind_int(stmt, 2, user_id) != 0) {
+        LOGE("Failed to bind user id");
+        sql.finalize(stmt);
+        sql.safe_close(db);
+        return false;
+    }
+
+    bool result = false;
+    if (sql.step(stmt) == 100) { // SQLITE_ROW
+        result = true;
+    }
+
+    // Always finalize before closing
     sql.finalize(stmt);
-    sql.close(db);
-    return true;
-  }
+    sql.safe_close(db);
 
-  sql.finalize(stmt);
-  sql.close(db);
-  // Library handle (sql.lib) is intentionally left open for the next call
-  return false;
+    return result;
 }
 
 void relsposed_companion(int lib_fd) {
