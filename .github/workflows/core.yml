@@ -44,16 +44,16 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: libxposed/api
-          # libxposed API 100 (peeled commit of tag `100`).
-          ref: 9ae4d6ac36ef803e5fde096e543657a6ebc2d60e
+          # Last libxposed API master revision used by this fork while publishing API 100.
+          ref: b896dbcda3fa1550d04d43d962923318ed5a61a8
           path: libxposed/api
 
       - name: Checkout libxposed/service
         uses: actions/checkout@v4
         with:
           repository: libxposed/service
-          # libxposed service interface 100 (peeled commit of tag `100`).
-          ref: e9d228aed778bb7302a43538ff6aa34377d80a3e
+          # Matching service master revision publishing interface 100.
+          ref: 496b76fa3e5af87958ebef97bd160319e05da79b
           path: libxposed/service
 
       - name: Setup Java for libxposed
