@@ -56,11 +56,11 @@ jobs:
           ref: 496b76fa3e5af87958ebef97bd160319e05da79b
           path: libxposed/service
 
-      - name: Setup Java for libxposed
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -125,12 +125,6 @@ jobs:
             report_failure "libxposed service build failed" ../libxposed-service-build.log
             exit "$status"
           fi
-
-      - name: Setup Java for ReLSPosed
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
 
       - name: Build with Gradle
         shell: bash
