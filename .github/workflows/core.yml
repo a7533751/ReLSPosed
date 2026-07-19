@@ -88,16 +88,43 @@ jobs:
         run: rm -rf $ANDROID_HOME/cmake
 
       - name: Build dependencies
+        shell: bash
         working-directory: libxposed
         run: |
+          report_failure() {
+            local title=$1
+            local log_file=$2
+            local message
+            message=$(grep -Eni '(^FAILURE:|^\* What went wrong:|^Execution failed for task|^> |^> Task .*FAILED|(^|[[:space:]])(fatal )?error:|Could not (resolve|find|determine|compile)|Caused by:)' "$log_file" | tail -n 80)
+            if [ -z "$message" ]; then
+              message=$(tail -n 100 "$log_file")
+            fi
+            message=${message//'%'/'%25'}
+            message=${message//$'\r'/'%0D'}
+            message=${message//$'\n'/'%0A'}
+            echo "::error title=$title::$message"
+          }
+
+          set +e
+          set -o pipefail
           echo 'org.gradle.caching=true' >> ~/.gradle/gradle.properties
           echo 'org.gradle.parallel=true' >> ~/.gradle/gradle.properties
           echo 'org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -XX:+UseParallelGC' >> ~/.gradle/gradle.properties
           echo 'android.native.buildOutput=verbose' >> ~/.gradle/gradle.properties
           cd api
-          ./gradlew publishToMavenLocal
+          ./gradlew publishToMavenLocal --stacktrace 2>&1 | tee ../libxposed-api-build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            report_failure "libxposed API build failed" ../libxposed-api-build.log
+            exit "$status"
+          fi
           cd ../service
-          ./gradlew publishToMavenLocal
+          ./gradlew publishToMavenLocal --stacktrace 2>&1 | tee ../libxposed-service-build.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            report_failure "libxposed service build failed" ../libxposed-service-build.log
+            exit "$status"
+          fi
 
       - name: Setup Java for ReLSPosed
         uses: actions/setup-java@v4
