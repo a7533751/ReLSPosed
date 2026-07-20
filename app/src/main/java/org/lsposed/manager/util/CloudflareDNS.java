@@ -1,7 +1,6 @@
 package org.lsposed.manager.util;
 
 import android.os.Build;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -11,7 +10,6 @@ import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.UnknownHostException;
-import java.time.Duration;
 import java.util.List;
 
 import okhttp3.ConnectionSpec;
@@ -27,10 +25,6 @@ public final class CloudflareDNS implements Dns {
     public boolean DoH = App.getPreferences().getBoolean("doh", false);
     public boolean noProxy = ProxySelector.getDefault().select(url.uri()).get(0) == Proxy.NO_PROXY;
     private final Dns cloudflare;
-    // Set once the DoH resolver proves unreachable (e.g. Cloudflare blocked on
-    // this network) so we stop paying its timeout on every subsequent lookup and
-    // use the system resolver for the rest of the session.
-    private volatile boolean dohUnavailable = false;
 
     public CloudflareDNS() {
         var trustManager = Platform.get().platformTrustManager();
@@ -48,11 +42,6 @@ public final class CloudflareDNS implements Dns {
                         .cache(App.getOkHttpCache())
                         .sslSocketFactory(new NoSniFactory(), trustManager)
                         .connectionSpecs(List.of(tls))
-                        // Fail fast when the DoH endpoint is blocked so the
-                        // system-DNS fallback kicks in quickly instead of
-                        // stalling on the default 10s connect timeout.
-                        .connectTimeout(Duration.ofSeconds(3))
-                        .callTimeout(Duration.ofSeconds(5))
                         .build());
         try {
             builder.bootstrapDnsHosts(List.of(
@@ -68,18 +57,10 @@ public final class CloudflareDNS implements Dns {
     @NonNull
     @Override
     public List<InetAddress> lookup(@NonNull String hostname) throws UnknownHostException {
-        if (DoH && noProxy && !dohUnavailable) {
-            try {
-                return cloudflare.lookup(hostname);
-            } catch (UnknownHostException e) {
-                // The DoH resolver is unreachable on this network (e.g. Cloudflare
-                // is blocked). Fall back to the system resolver so the app keeps
-                // working instead of failing every lookup, and skip DoH for the
-                // rest of the session.
-                dohUnavailable = true;
-                Log.w(App.TAG, "DoH resolver unreachable, falling back to system DNS for this session: " + e.getMessage());
-            }
+        if (DoH && noProxy) {
+            return cloudflare.lookup(hostname);
+        } else {
+            return SYSTEM.lookup(hostname);
         }
-        return SYSTEM.lookup(hostname);
     }
 }
