@@ -40,7 +40,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.provider.Telephony;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -481,12 +480,10 @@ public class LSPosedService extends ILSPosedService.Stub {
         registerModuleScopeReceiver();
         registerUidObserver();
 
-        // The daemon intentionally starts in late_start service mode. If that happens after
-        // LOCKED_BOOT_COMPLETED, the non-sticky broadcast is already gone, so restore the
-        // notification from the persistent boot property instead.
-        if (SystemProperties.getBoolean("sys.boot_completed", false)) {
-            getExecutorService().submit(() -> dispatchBootCompleted(null));
-        }
+        // The daemon intentionally starts in late_start service mode and may miss the
+        // non-sticky boot broadcast. Publish the configured state as soon as the system
+        // context is ready; a later boot broadcast only updates the same notification ID.
+        getExecutorService().submit(() -> dispatchBootCompleted(null));
     }
 
     @Override
