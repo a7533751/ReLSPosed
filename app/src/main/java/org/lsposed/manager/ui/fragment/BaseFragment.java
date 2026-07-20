@@ -19,10 +19,13 @@
 
 package org.lsposed.manager.ui.fragment;
 
+import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.IdRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.MenuProvider;
@@ -32,6 +35,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.NavOptions;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.google.android.material.color.MaterialColors;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -44,6 +48,13 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 public abstract class BaseFragment extends Fragment {
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        int colorBackground = MaterialColors.getColor(view, android.R.attr.colorBackground);
+        view.setBackgroundColor(colorBackground);
+    }
 
     public void navigateUp() {
         getNavController().navigateUp();
