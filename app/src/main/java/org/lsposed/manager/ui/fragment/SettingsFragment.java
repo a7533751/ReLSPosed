@@ -155,21 +155,23 @@ public class SettingsFragment extends BaseFragment {
             boolean installed = ConfigManager.isBinderAlive();
             MaterialSwitchPreference prefVerboseLogs = findPreference("disable_verbose_log");
             if (prefVerboseLogs != null) {
-                prefVerboseLogs.setVisible(BuildConfig.DEBUG);
+                prefVerboseLogs.setEnabled(false);
                 if (BuildConfig.DEBUG) {
-                    prefVerboseLogs.setEnabled(false);
                     ConfigManager.setVerboseLogEnabled(false);
                     prefVerboseLogs.setChecked(!installed || !ConfigManager.isVerboseLogEnabled());
+                } else {
+                    prefVerboseLogs.setChecked(true);
                 }
             }
 
             MaterialSwitchPreference prefLogWatchDog = findPreference("enable_log_watchdog");
             if (prefLogWatchDog != null) {
-                prefLogWatchDog.setVisible(BuildConfig.DEBUG);
+                prefLogWatchDog.setEnabled(false);
                 if (BuildConfig.DEBUG) {
-                    prefLogWatchDog.setEnabled(false);
                     ConfigManager.setLogWatchdog(true);
                     prefLogWatchDog.setChecked(!installed || ConfigManager.isLogWatchdogEnabled());
+                } else {
+                    prefLogWatchDog.setChecked(false);
                 }
             }
 
