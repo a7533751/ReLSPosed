@@ -21,6 +21,7 @@ set(IGNORED_WARNINGS
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${EXTERNAL_ROOT}/xz-embedded/linux/include)
 target_compile_options(${PROJECT_NAME} PRIVATE -Wpedantic ${IGNORED_WARNINGS})
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC dobby_static lsplant_static xz_static log fmt-header-only)
 target_link_libraries(${PROJECT_NAME} PRIVATE dex_builder_static)

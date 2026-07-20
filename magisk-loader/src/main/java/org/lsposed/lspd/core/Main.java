@@ -33,16 +33,20 @@ import org.lsposed.lspd.BuildConfig;
 public class Main {
 
     public static void forkCommon(boolean isSystem, String niceName, String appDir, IBinder binder) {
+        Utils.Log.muted = !BuildConfig.DEBUG;
+
         if (isSystem) {
             ParasiticManagerSystemHooker.start();
         }
 
         Startup.initXposed(isSystem, niceName, appDir, ILSPApplicationService.Stub.asInterface(binder));
 
-        try {
-            Utils.Log.muted = serviceClient.isLogMuted();
-        } catch (Throwable t) {
-            Utils.logE("failed to configure logs", t);
+        if (BuildConfig.DEBUG) {
+            try {
+                Utils.Log.muted = serviceClient.isLogMuted();
+            } catch (Throwable t) {
+                Utils.logE("failed to configure logs", t);
+            }
         }
 
         if (niceName.equals(BuildConfig.DEFAULT_MANAGER_PACKAGE_NAME) && ParasiticManagerHooker.start()) {

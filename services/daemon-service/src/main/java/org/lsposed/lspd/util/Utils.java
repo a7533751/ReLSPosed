@@ -46,6 +46,7 @@ public class Utils {
         }
 
         public static void d(String tag, String msg, Throwable tr) {
+            if (muted) return;
             android.util.Log.d(tag, msg, tr);
         }
 
@@ -55,6 +56,7 @@ public class Utils {
         }
 
         public static void v(String tag, String msg, Throwable tr) {
+            if (muted) return;
             android.util.Log.v(tag, msg, tr);
         }
 
@@ -64,6 +66,7 @@ public class Utils {
         }
 
         public static void i(String tag, String msg, Throwable tr) {
+            if (muted) return;
             android.util.Log.i(tag, msg, tr);
         }
 
@@ -78,10 +81,12 @@ public class Utils {
         }
 
         public static void e(String tag, String msg) {
+            if (muted) return;
             android.util.Log.e(tag, msg);
         }
 
         public static void e(String tag, String msg, Throwable tr) {
+            if (muted) return;
             android.util.Log.e(tag, msg, tr);
         }
 
