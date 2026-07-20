@@ -271,10 +271,10 @@ public class ConfigManager {
         Map<String, Object> config = getModulePrefs("lspd", 0, "config");
 
         Object bool = config.get("enable_verbose_log");
-        verboseLog = bool == null || (boolean) bool;
+        verboseLog = BuildConfig.DEBUG && (bool == null || (boolean) bool);
 
         bool = config.get("enable_log_watchdog");
-        logWatchdog = bool == null || (boolean) bool;
+        logWatchdog = BuildConfig.DEBUG && (bool == null || (boolean) bool);
 
         bool = config.get("enable_dex_obfuscate");
         dexObfuscate = bool == null || (boolean) bool;
@@ -1008,21 +1008,20 @@ public class ConfigManager {
 
     public void setVerboseLog(boolean on) {
         if (BuildConfig.DEBUG) return;
-        var logcatService = ServiceManager.getLogcatService();
-        if (on) {
-            logcatService.startVerbose();
-        } else {
-            logcatService.stopVerbose();
-        }
-        updateModulePrefs("lspd", 0, "config", "enable_verbose_log", on);
-        verboseLog = on;
+        updateModulePrefs("lspd", 0, "config", "enable_verbose_log", false);
+        verboseLog = false;
     }
 
     public boolean verboseLog() {
-        return BuildConfig.DEBUG || verboseLog;
+        return BuildConfig.DEBUG;
     }
 
     public void setLogWatchdog(boolean on) {
+        if (!BuildConfig.DEBUG) {
+            updateModulePrefs("lspd", 0, "config", "enable_log_watchdog", false);
+            logWatchdog = false;
+            return;
+        }
         var logcatService = ServiceManager.getLogcatService();
         if (on) {
             logcatService.enableWatchdog();
@@ -1034,7 +1033,7 @@ public class ConfigManager {
     }
 
     public boolean isLogWatchdogEnabled() {
-        return logWatchdog;
+        return BuildConfig.DEBUG && logWatchdog;
     }
 
     public void setDexObfuscate(boolean on) {

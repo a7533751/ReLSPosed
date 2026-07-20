@@ -6,14 +6,18 @@ add_subdirectory(${EXTERNAL_ROOT} external)
 set(SOURCES
         dex2oat.cpp
         denylist.cpp
-        logcat.cpp
         obfuscation.cpp
         packagename.cpp
 )
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    list(APPEND SOURCES logcat.cpp)
+endif()
+
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${EXTERNAL_ROOT}/rapidxml)
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE lsplant_static dex_builder_static android log)
 

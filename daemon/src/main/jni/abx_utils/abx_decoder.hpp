@@ -1,9 +1,9 @@
 #include <cstring>
-#include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
 
+#include "../logging.h"
 #include "const.h"
 #include "xml_element.hpp"
 
@@ -33,7 +33,7 @@ class AbxDecoder {
         if (!isAbx())
             return false;
 
-        std::cerr << "ABX file found" << std::endl;
+        LOGD("ABX file found");
 
         docOpen = false;
         rootClosed = false;
@@ -114,7 +114,7 @@ class AbxDecoder {
                     auto tagName = readInternedString();
                     auto lastTagName = elementStack.back()->mTagName.data();
                     if (strcmp(tagName.data(), lastTagName) != 0) {
-                        std::cerr << "Mismatching tags " << tagName.data() << " - " << lastTagName << std::endl;
+                        LOGE("Mismatching tags %s - %s", tagName.data(), lastTagName);
                     }
 
                     if (elementStack.size() == 1) {
@@ -139,7 +139,7 @@ class AbxDecoder {
                     continue;
                 }
                 default:
-                    std::cerr << "Unimplemented type " << (tType >> 4) << " " << dType << std::endl;
+                    LOGE("Unimplemented type %d %d", tType >> 4, dType);
                     return false;
             }
 

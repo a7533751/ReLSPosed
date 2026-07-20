@@ -104,7 +104,7 @@ public class ConfigFileManager {
             Files.createDirectories(basePath);
             SELinux.setFileContext(basePath.toString(), "u:object_r:system_file:s0");
             Files.createDirectories(configDirPath);
-            createLogDirPath();
+            if (BuildConfig.DEBUG) createLogDirPath();
         } catch (IOException e) {
             Log.e(TAG, Log.getStackTraceString(e));
         }
@@ -205,6 +205,7 @@ public class ConfigFileManager {
     }
 
     static void moveLogDir() {
+        if (!BuildConfig.DEBUG) return;
         try {
             if (Files.exists(logDirPath)) {
                 if (chattr0(logDirPath)) {
@@ -244,6 +245,11 @@ public class ConfigFileManager {
 
     static void getLogs(ParcelFileDescriptor zipFd) throws IllegalStateException {
         try (zipFd; var os = new ZipOutputStream(new FileOutputStream(zipFd.getFileDescriptor()))) {
+            if (!BuildConfig.DEBUG) {
+                os.setLevel(Deflater.NO_COMPRESSION);
+                return;
+            }
+
             var comment = String.format(Locale.ROOT, "ReLSPosed %s %s (%d)",
                     BuildConfig.BUILD_TYPE, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE);
             os.setComment(comment);

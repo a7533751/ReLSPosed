@@ -14,6 +14,7 @@ add_library(${PROJECT_NAME} SHARED ${SRC_LIST} ${CMAKE_CURRENT_BINARY_DIR}/src/l
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
 
 target_link_libraries(${PROJECT_NAME} core log)
 

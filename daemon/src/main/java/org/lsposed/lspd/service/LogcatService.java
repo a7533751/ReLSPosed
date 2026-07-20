@@ -9,6 +9,8 @@ import android.os.SystemProperties;
 import android.system.Os;
 import android.util.Log;
 
+import org.lsposed.daemon.BuildConfig;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -55,6 +57,8 @@ public class LogcatService implements Runnable {
         String classPath = System.getProperty("java.class.path");
         var abi = Process.is64Bit() ? Build.SUPPORTED_64_BIT_ABIS[0] : Build.SUPPORTED_32_BIT_ABIS[0];
         System.load(classPath + "!/lib/" + abi + "/" + System.mapLibraryName("daemon"));
+        if (!BuildConfig.DEBUG) return;
+
         ConfigFileManager.moveLogDir();
 
         // Meizu devices set this prop and prevent debug logs from being recorded
@@ -96,6 +100,7 @@ public class LogcatService implements Runnable {
 
     @Override
     public void run() {
+        if (!BuildConfig.DEBUG) return;
         Log.i(TAG, "start running");
         runLogcat();
         Log.i(TAG, "stopped");
@@ -103,6 +108,7 @@ public class LogcatService implements Runnable {
 
     @SuppressWarnings("unused")
     private int refreshFd(boolean isVerboseLog) {
+        if (!BuildConfig.DEBUG) return -1;
         try {
             File log;
             if (isVerboseLog) {
@@ -159,10 +165,11 @@ public class LogcatService implements Runnable {
     }
 
     public boolean isRunning() {
-        return thread != null && thread.isAlive();
+        return BuildConfig.DEBUG && thread != null && thread.isAlive();
     }
 
     public void start() {
+        if (!BuildConfig.DEBUG) return;
         if (isRunning()) return;
         thread = new Thread(this);
         thread.setName("logcat");
@@ -175,22 +182,27 @@ public class LogcatService implements Runnable {
     }
 
     public void startVerbose() {
+        if (!BuildConfig.DEBUG) return;
         Log.i(TAG, "!!start_verbose!!");
     }
 
     public void stopVerbose() {
+        if (!BuildConfig.DEBUG) return;
         Log.i(TAG, "!!stop_verbose!!");
     }
 
     public void enableWatchdog() {
+        if (!BuildConfig.DEBUG) return;
         Log.i(TAG, "!!start_watchdog!!");
     }
 
     public void disableWatchdog() {
+        if (!BuildConfig.DEBUG) return;
         Log.i(TAG, "!!stop_watchdog!!");
     }
 
     public void refresh(boolean isVerboseLog) {
+        if (!BuildConfig.DEBUG) return;
         if (isVerboseLog) {
             Log.i(TAG, "!!refresh_verbose!!");
         } else {
@@ -204,16 +216,19 @@ public class LogcatService implements Runnable {
     }
 
     public File getVerboseLog() {
+        if (!BuildConfig.DEBUG) return null;
         var path = fdToPath(verboseFd);
         return path == null ? null : path.toFile();
     }
 
     public File getModulesLog() {
+        if (!BuildConfig.DEBUG) return null;
         var path = fdToPath(modulesFd);
         return path == null ? null : path.toFile();
     }
 
     public void checkLogFile() {
+        if (!BuildConfig.DEBUG) return;
         if (modulesFd == -1)
             refresh(false);
         if (verboseFd == -1)

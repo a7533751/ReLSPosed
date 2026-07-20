@@ -19,5 +19,6 @@
   -->
 
 <resources>
+    <bool name="show_logs">true</bool>
     <bool name="show_system_settings">false</bool>
 </resources>

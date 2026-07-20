@@ -7,6 +7,10 @@ add_library(oat_hook SHARED oat_hook.c)
 OPTION(LSPLT_BUILD_SHARED OFF)
 add_subdirectory(${EXTERNAL_ROOT}/lsplt/lsplt/src/main/jni external)
 
+target_compile_definitions(dex2oat PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
+target_compile_definitions(oat_hook PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
+target_compile_definitions(lsplt_static PRIVATE $<$<CONFIG:Release>:LOG_DISABLED>)
+
 target_link_libraries(dex2oat log)
 target_link_libraries(oat_hook log lsplt_static)
 
