@@ -161,6 +161,7 @@ public class ServiceManager {
         waitSystemService("activity");
         waitSystemService(Context.USER_SERVICE);
         waitSystemService(Context.APP_OPS_SERVICE);
+        waitSystemService(Context.NOTIFICATION_SERVICE);
 
         ConfigFileManager.reloadConfiguration();
 
