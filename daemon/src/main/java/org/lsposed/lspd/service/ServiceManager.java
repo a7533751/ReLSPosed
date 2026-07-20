@@ -266,6 +266,14 @@ public class ServiceManager {
         }
 
         try {
+            Class<?> configClass = Class.forName("com.mediatek.res.AsyncDrawableCache", false, null);
+            Field featureConfigField = configClass.getDeclaredField("sFeatureConfig");
+            featureConfigField.setAccessible(true);
+            featureConfigField.set(null, "0");
+        } catch (Throwable ignored) {
+        }
+
+        try {
             new Notification.Builder(new FakeContext(), "notification_workaround").build();
         } catch (AbstractMethodError e) {
             FakeContext.nullProvider = ! FakeContext.nullProvider;
