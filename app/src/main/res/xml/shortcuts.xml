@@ -33,7 +33,7 @@
             android:targetPackage="org.lsposed.manager" />
     </shortcut>
     <shortcut
-        android:enabled="@bool/show_logs"
+        android:enabled="true"
         android:icon="@drawable/shortcut_ic_logs"
         android:shortcutId="logs"
         android:shortcutLongLabel="@string/Logs"

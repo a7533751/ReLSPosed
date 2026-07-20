@@ -46,6 +46,7 @@ import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textview.MaterialTextView;
 
 import org.lsposed.manager.App;
+import org.lsposed.manager.BuildConfig;
 import org.lsposed.manager.ConfigManager;
 import org.lsposed.manager.R;
 import org.lsposed.manager.databinding.FragmentPagerBinding;
@@ -160,7 +161,15 @@ public class LogsFragment extends BaseFragment implements MenuProvider {
     @Override
     public void onPrepareMenu(@NonNull Menu menu) {
         wordWrap = menu.findItem(R.id.menu_word_wrap);
-        wordWrap.setChecked(App.getPreferences().getBoolean("enable_word_wrap", false));
+        if (!BuildConfig.DEBUG) {
+            menu.findItem(R.id.menu_save).setVisible(false);
+            menu.findItem(R.id.menu_scroll_top).setVisible(false);
+            menu.findItem(R.id.menu_scroll_down).setVisible(false);
+            menu.findItem(R.id.menu_clear).setVisible(false);
+            wordWrap.setVisible(false);
+        }
+        wordWrap.setChecked(!BuildConfig.DEBUG ||
+                App.getPreferences().getBoolean("enable_word_wrap", false));
         binding.viewPager.setUserInputEnabled(wordWrap.isChecked());
     }
 
@@ -223,6 +232,10 @@ public class LogsFragment extends BaseFragment implements MenuProvider {
             }
 
             void fullRefresh() {
+                if (!BuildConfig.DEBUG) {
+                    refresh(Collections.emptyList());
+                    return;
+                }
                 runAsync(() -> {
                     isLoaded = false;
                     List<CharSequence> tmp;
@@ -269,6 +282,7 @@ public class LogsFragment extends BaseFragment implements MenuProvider {
             // ltr even for rtl languages because of log format
             binding.recyclerView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             binding.swipeRefreshLayout.setProgressViewEndTarget(true, binding.swipeRefreshLayout.getProgressViewEndOffset());
+            binding.swipeRefreshLayout.setEnabled(BuildConfig.DEBUG);
             RecyclerViewKt.fixEdgeEffect(binding.recyclerView, false, true);
             binding.swipeRefreshLayout.setOnRefreshListener(adaptor::fullRefresh);
             adaptor.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {

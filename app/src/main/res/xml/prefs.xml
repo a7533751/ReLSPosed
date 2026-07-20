@@ -89,8 +89,7 @@
             android:key="disable_verbose_log"
             android:persistent="false"
             android:summary="@string/settings_disable_verbose_log_summary"
-            android:title="@string/settings_disable_verbose_log"
-            app:isPreferenceVisible="@bool/show_logs" />
+            android:title="@string/settings_disable_verbose_log" />
 
         <rikka.material.preference.MaterialSwitchPreference
             android:defaultValue="true"
@@ -98,8 +97,7 @@
             android:key="enable_log_watchdog"
             android:persistent="false"
             android:summary="@string/settings_enable_log_watchdog_summary"
-            android:title="@string/settings_enable_log_watchdog"
-            app:isPreferenceVisible="@bool/show_logs" />
+            android:title="@string/settings_enable_log_watchdog" />
 
         <rikka.material.preference.MaterialSwitchPreference
             android:defaultValue="true"

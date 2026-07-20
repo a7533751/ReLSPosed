@@ -40,7 +40,6 @@ import androidx.navigation.ui.NavigationUI;
 import com.google.android.material.navigation.NavigationBarView;
 
 import org.lsposed.manager.App;
-import org.lsposed.manager.BuildConfig;
 import org.lsposed.manager.ConfigManager;
 import org.lsposed.manager.R;
 import org.lsposed.manager.databinding.ActivityMainBinding;
@@ -125,9 +124,7 @@ public class MainActivity extends BaseActivity implements RepoLoader.RepoListene
             if (!TextUtils.isEmpty(intent.getDataString())) {
                 switch (intent.getDataString()) {
                     case "modules" -> nav.setSelectedItemId(R.id.modules_nav);
-                    case "logs" -> {
-                        if (BuildConfig.DEBUG) nav.setSelectedItemId(R.id.logs_fragment);
-                    }
+                    case "logs" -> nav.setSelectedItemId(R.id.logs_fragment);
                     case "repo" -> {
                         if (ConfigManager.isMagiskInstalled()) {
                             nav.setSelectedItemId(R.id.repo_nav);
@@ -250,9 +247,6 @@ public class MainActivity extends BaseActivity implements RepoLoader.RepoListene
         } else setModulesSummary(0);
         if (binding != null) {
             var nav = (NavigationBarView) binding.nav;
-            if (!BuildConfig.DEBUG) {
-                nav.getMenu().removeItem(R.id.logs_fragment);
-            }
             if (UpdateUtil.needUpdate()) {
                 var badge = nav.getOrCreateBadge(R.id.main_fragment);
                 badge.setVisible(true);
